@@ -1,133 +1,953 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-title" content="Remixatron">
-
-    <title>Remixatron</title>
-
-    <link rel="apple-touch-icon" href="/mobile-icon.png">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.1/umd/popper.min.js" integrity="sha512-g2PN+aYR0KupTVwea5Ppqw4bxWLLypWdd+h7E0ydT8zF+/Y2Qpk8Y1SnzVw6ZCVJPrgB/91s3VfhVhP7Y4+ucw==" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js" integrity="sha512-6+YN/9o9BWrk6wSfGxQGpt3EUK6XeHi6yeHV+TYD2GR0Sj/cggRpXr1BrAQf0as6XslxomMUxXp2vIl+fv0QRA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
-
-    <style>
-
-      .hi {
-        color: white
-      }
-
-      .vl {
-        border-left: 1px solid lightgray;
-        height: 38px;
-        width: 2px;
-        margin-left: 40px;
-        margin-right: 10px;
-        margin-top: 0px;
-        margin-bottom: 0px;
-      }
-      
-    </style>
-
-  </head>
-  <body>
-
-  <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand mr-auto" href="#">
-        <img src="/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
-        Remixatron
-      </a>
-      <button id="toggler" class="navbar-toggler p-0 mb-2" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse show" id="navbarSupportedContent">
-        <form class="d-flex flex-row flex-grow-1" onsubmit="return fetchURL();">
-          <div class="dropdown">
-            <button class="btn btn-sm btn-dark dropdown-toggle m-1 p-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons-outlined m-0 p-1 hi">star_border</i>
-            </button>
-            <div class="dropdown-menu pre-scrollable" id="ddhistory" aria-labelledby="dropdownMenuButton">
-            </div>
-          </div>
-          <input class="form-control ml-lg-2 mr-0" type="search" placeholder="Enter YouTube URL here..." id="ytURL">
-          <button class="btn btn-lg m-0 p-0" type="button" onclick="fetchURL();">
-            <i class="material-icons m-0 p-1 hi">search</i>
-          </button>
-        </form>
-        <form class="d-flex flex-row m-1" id="upload_form" enctype="multipart/form-data" onsubmit="return upload_audio();">
-          <div class="custom-file">
-            <input type="file" class="custom-file-input" onchange="on_file_selected();" id="fcu" name="file">
-            <label id="fcuLabel" for="fcu" class="custom-file-label">Select a file to upload...</label>
-          </div>
-        </form>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Remixatron Offline</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #1a1f28;
+      --panel-2: #252c38;
+      --text: #edf1f7;
+      --muted: #9aa7bd;
+      --accent: #58a6ff;
+      --good: #4ad295;
+      --warn: #f5b83d;
+      --err: #ff6b6b;
+      --line: #313a49;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #0d1015 0%, #111824 100%);
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.22);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: .4px;
+    }
+    .muted { color: var(--muted); }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+    .controls > div { grid-column: span 3; }
+    .controls > .wide { grid-column: span 6; }
+    @media (max-width: 980px) {
+      .controls > div, .controls > .wide { grid-column: span 6; }
+    }
+    @media (max-width: 640px) {
+      .controls > div, .controls > .wide { grid-column: span 12; }
+    }
+    label {
+      display: block;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input[type="file"], input[type="number"], input[type="range"], select, button {
+      width: 100%;
+    }
+    input[type="number"], select {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    input[type="range"] { accent-color: var(--accent); }
+    button {
+      background: var(--accent);
+      border: 0;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s opacity;
+    }
+    button.secondary { background: #3f4d66; }
+    button.good { background: var(--good); }
+    button.warn { background: var(--warn); color: #1e1e1e; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    #timeline { width: 100%; height: 330px; background: #0c0f15; border-radius: 10px; border: 1px solid #283042; }
+    .progress-wrap {
+      background: #11161f;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      height: 20px;
+      overflow: hidden;
+    }
+    #progress {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #4ea4ff 0%, #7d73ff 100%);
+      transition: width .2s;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .stat {
+      background: #121925;
+      border: 1px solid #2a3344;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: .85rem;
+    }
+    .stat .k { color: var(--muted); display: block; font-size: .76rem; }
+    #log {
+      max-height: 180px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .78rem;
+      background: #0c1018;
+      border: 1px solid #293245;
+      border-radius: 8px;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card header">
+      <div>
+        <h1>Remixatron — Full Offline Client Remix Engine</h1>
+        <div class="muted">Single-file HTML/JS app. All audio decoding, beat analysis, clustering, path generation, and playback run entirely in-browser.</div>
       </div>
-    </nav>
+      <div class="muted" id="engineState">Engine: idle</div>
+    </section>
 
-    <canvas id='viz' width="200" height="200"></canvas>
-
-    <!-- define progress bar modal -->
-    <div id='progress-modal' class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header text-center">
-            <h5 class="modal-title w-100" id="progress-title">Progress</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="progress" style="height: 40px;">
-              <div id="progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <h5 id="progress-message" class="justify-content-center d-flex w-100 align-middle"></h5>
-            <button class="btn" type="button" onclick="cancel_fetch();">Cancel</button>
-          </div>
+    <section class="card">
+      <div class="controls">
+        <div class="wide">
+          <label for="fileInput">Audio File (mp3/wav/ogg/m4a/aac/flac where browser codec supports decodeAudioData)</label>
+          <input id="fileInput" type="file" accept="audio/*" />
+        </div>
+        <div>
+          <label for="clusterCount">Clusters (0 = auto)</label>
+          <input id="clusterCount" type="number" min="0" max="64" value="0" />
+        </div>
+        <div>
+          <label for="jumpWindow">Jump Window (beats)</label>
+          <input id="jumpWindow" type="number" min="2" max="64" value="16" />
+        </div>
+        <div>
+          <label for="historyDepth">Jump Match Depth</label>
+          <input id="historyDepth" type="number" min="1" max="8" value="3" />
+        </div>
+        <div>
+          <label for="tempoBias">Tempo Snap Strength</label>
+          <input id="tempoBias" type="range" min="0" max="1" step="0.01" value="0.76" />
+        </div>
+        <div>
+          <button id="analyzeBtn">Analyze + Build Remix Graph</button>
+        </div>
+        <div>
+          <button class="good" id="playBtn" disabled>Play</button>
+        </div>
+        <div>
+          <button class="secondary" id="pauseBtn" disabled>Pause</button>
+        </div>
+        <div>
+          <button class="warn" id="stopBtn" disabled>Stop</button>
+        </div>
+        <div>
+          <button class="secondary" id="rebuildBtn" disabled>Rebuild Path</button>
         </div>
       </div>
-    </div>
+      <div style="margin-top: 10px" class="progress-wrap"><div id="progress"></div></div>
+      <div class="muted" style="margin-top:8px" id="progressText">No job running.</div>
+    </section>
 
-    <!-- define the Now Playing toast -->
-    <div role="alert" class="toast sticky-bottom" data-autohide="false" data-delay="10000">
-      <div class="toast-header">
-        <img id='npimg' src="" class="rounded mr-2" height="64px">
-        <strong id="np-header-text" class="mr-auto text-center">Now Playing</strong>
-        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="toast-header">
-        <button class="btn btn-sm" type="button" onclick="playback(false);">
-          <i id='playIcon' class="material-icons">pause_circle_outline</i>
-        </button>
-        <button class="btn btn-sm" type="button" onclick="toggle_to_history();">
-            <i id='starIcon' class="material-icons">star_border</i>
-        </button>
+    <section class="card">
+      <canvas id="timeline" width="1200" height="330"></canvas>
+    </section>
 
-        <div class="vl"></div>
+    <section class="card stats" id="stats"></section>
 
-        <input class="form-control" style="width: 60px;" type="number" id="clusterSize" 
-               placeholder="0" value="0" min="0" 
-               onchange="clusters=parseInt(this.value); clusters = isNaN(clusters) ? 0: clusters; console.log(clusters);"/>
-        <button class="btn btn-sm" type="button" onclick="advancedFetch();">
-          <i id='redoIcon' class="material-icons">redo</i>
-        </button>
-      </div>
-    </div>
+    <section class="card">
+      <div class="muted" style="margin-bottom:8px">Log</div>
+      <div id="log"></div>
+    </section>
+  </main>
 
-    <script src="index.js"></script>
+<script>
+(() => {
+  'use strict';
 
-  </body>
+  const state = {
+    audioCtx: null,
+    file: null,
+    rawArrayBuffer: null,
+    audioBuffer: null,
+    mono: null,
+    sampleRate: 0,
+    duration: 0,
+    beats: [],
+    features: [],
+    clusters: [],
+    segments: [],
+    jumpCandidates: [],
+    playVector: [],
+    k: 0,
+    tempoBpm: 0,
+    beatSec: 0,
+    isReady: false,
+    isPlaying: false,
+    isPaused: false,
+    startTimeCtx: 0,
+    pauseAtSec: 0,
+    currentIdx: 0,
+    schedulerId: null,
+    activeNode: null,
+    colorMap: [],
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const fileInput = $('fileInput');
+  const analyzeBtn = $('analyzeBtn');
+  const playBtn = $('playBtn');
+  const pauseBtn = $('pauseBtn');
+  const stopBtn = $('stopBtn');
+  const rebuildBtn = $('rebuildBtn');
+  const progress = $('progress');
+  const progressText = $('progressText');
+  const logBox = $('log');
+  const statsBox = $('stats');
+  const engineState = $('engineState');
+  const canvas = $('timeline');
+  const ctx = canvas.getContext('2d');
+
+  const chunkYield = () => new Promise(r => setTimeout(r, 0));
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  const log = (msg) => {
+    const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    logBox.textContent += `[${ts}] ${msg}\n`;
+    logBox.scrollTop = logBox.scrollHeight;
+  };
+
+  const setProgress = (pct, text) => {
+    progress.style.width = `${clamp(pct, 0, 100).toFixed(1)}%`;
+    progressText.textContent = text;
+  };
+
+  const ensureAudioContext = () => {
+    if (!state.audioCtx) {
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return state.audioCtx;
+  };
+
+  const getMono = (audioBuffer) => {
+    const n = audioBuffer.length;
+    const channels = audioBuffer.numberOfChannels;
+    if (channels === 1) return new Float32Array(audioBuffer.getChannelData(0));
+    const out = new Float32Array(n);
+    for (let c = 0; c < channels; c++) {
+      const d = audioBuffer.getChannelData(c);
+      for (let i = 0; i < n; i++) out[i] += d[i];
+    }
+    for (let i = 0; i < n; i++) out[i] /= channels;
+    return out;
+  };
+
+  function hanning(n) {
+    const w = new Float32Array(n);
+    for (let i = 0; i < n; i++) w[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1));
+    return w;
+  }
+
+  function dftPower(frame) {
+    const N = frame.length;
+    const half = (N >> 1) + 1;
+    const p = new Float32Array(half);
+    for (let k = 0; k < half; k++) {
+      let re = 0, im = 0;
+      const ang = (-2 * Math.PI * k) / N;
+      for (let n = 0; n < N; n++) {
+        const a = ang * n;
+        const v = frame[n];
+        re += v * Math.cos(a);
+        im += v * Math.sin(a);
+      }
+      p[k] = re * re + im * im;
+    }
+    return p;
+  }
+
+  function hzToMel(hz) { return 2595 * Math.log10(1 + hz / 700); }
+  function melToHz(mel) { return 700 * (Math.pow(10, mel / 2595) - 1); }
+
+  function buildMelFilterbank(sr, nFft, nMels = 40, fMin = 20, fMax = sr / 2) {
+    const melMin = hzToMel(fMin);
+    const melMax = hzToMel(fMax);
+    const mels = new Float32Array(nMels + 2);
+    for (let i = 0; i < mels.length; i++) mels[i] = melMin + (i / (nMels + 1)) * (melMax - melMin);
+    const hz = Array.from(mels, melToHz);
+    const bins = hz.map(f => Math.floor(((nFft + 1) * f) / sr));
+    const fb = Array.from({ length: nMels }, () => new Float32Array((nFft >> 1) + 1));
+    for (let m = 1; m <= nMels; m++) {
+      const left = bins[m - 1], center = bins[m], right = bins[m + 1];
+      for (let k = left; k < center; k++) fb[m - 1][k] = (k - left) / Math.max(center - left, 1);
+      for (let k = center; k < right; k++) fb[m - 1][k] = (right - k) / Math.max(right - center, 1);
+    }
+    return fb;
+  }
+
+  function dct(input, outN = 13) {
+    const N = input.length;
+    const out = new Float32Array(outN);
+    for (let k = 0; k < outN; k++) {
+      let sum = 0;
+      for (let n = 0; n < N; n++) sum += input[n] * Math.cos((Math.PI / N) * (n + 0.5) * k);
+      out[k] = sum;
+    }
+    return out;
+  }
+
+  function computeChromagramFromPower(power, sr, nFft) {
+    const bins = power.length;
+    const chroma = new Float32Array(12);
+    for (let k = 1; k < bins; k++) {
+      const f = (k * sr) / nFft;
+      if (f < 27.5 || f > 5000) continue;
+      const midi = 69 + 12 * Math.log2(f / 440);
+      const cls = ((Math.round(midi) % 12) + 12) % 12;
+      chroma[cls] += power[k];
+    }
+    let norm = 0;
+    for (let i = 0; i < 12; i++) norm += chroma[i] * chroma[i];
+    norm = Math.sqrt(norm) || 1;
+    for (let i = 0; i < 12; i++) chroma[i] /= norm;
+    return chroma;
+  }
+
+  async function analyzeAudio() {
+    if (!state.file) throw new Error('Select an audio file first.');
+    const ac = ensureAudioContext();
+    setProgress(2, 'Reading local file...');
+    state.rawArrayBuffer = await state.file.arrayBuffer();
+    setProgress(8, 'Decoding audio...');
+    state.audioBuffer = await ac.decodeAudioData(state.rawArrayBuffer.slice(0));
+    state.sampleRate = state.audioBuffer.sampleRate;
+    state.duration = state.audioBuffer.duration;
+    state.mono = getMono(state.audioBuffer);
+    log(`Decoded: ${state.file.name} | ${state.duration.toFixed(2)}s @ ${state.sampleRate}Hz`);
+
+    const frameSize = 2048;
+    const hopSize = 512;
+    const nFrames = Math.floor((state.mono.length - frameSize) / hopSize);
+    const windowFn = hanning(frameSize);
+    const melBank = buildMelFilterbank(state.sampleRate, frameSize, 40);
+
+    const flux = new Float32Array(nFrames);
+    const energies = new Float32Array(nFrames);
+    const chromaFrames = new Array(nFrames);
+    const mfccFrames = new Array(nFrames);
+
+    let prevPower = new Float32Array((frameSize >> 1) + 1);
+
+    for (let i = 0; i < nFrames; i++) {
+      if (i % 80 === 0) {
+        setProgress(10 + (i / nFrames) * 35, `Feature extraction ${i}/${nFrames}`);
+        await chunkYield();
+      }
+      const start = i * hopSize;
+      const frame = new Float32Array(frameSize);
+      for (let j = 0; j < frameSize; j++) frame[j] = state.mono[start + j] * windowFn[j];
+      const power = dftPower(frame);
+
+      let f = 0;
+      for (let k = 0; k < power.length; k++) {
+        const d = power[k] - prevPower[k];
+        if (d > 0) f += d;
+      }
+      flux[i] = f;
+      prevPower = power;
+
+      let e = 0;
+      for (let j = 0; j < frameSize; j++) e += frame[j] * frame[j];
+      energies[i] = Math.sqrt(e / frameSize);
+
+      chromaFrames[i] = computeChromagramFromPower(power, state.sampleRate, frameSize);
+
+      const mel = new Float32Array(melBank.length);
+      for (let m = 0; m < melBank.length; m++) {
+        let s = 0;
+        const row = melBank[m];
+        for (let k = 0; k < power.length; k++) s += row[k] * power[k];
+        mel[m] = Math.log(1 + s);
+      }
+      mfccFrames[i] = dct(mel, 13);
+    }
+
+    setProgress(46, 'Beat tracking...');
+    const fluxNorm = normalizeVector(flux);
+    const smoothFlux = movingAverage(fluxNorm, 8);
+    const bpm = estimateTempo(smoothFlux, state.sampleRate / hopSize, parseFloat($('tempoBias').value));
+    state.tempoBpm = bpm;
+    state.beatSec = 60 / bpm;
+
+    const beatTimes = alignBeatsToOnsets(smoothFlux, state.sampleRate, hopSize, state.beatSec);
+    if (beatTimes.length < 16) throw new Error(`Beat tracking failed: detected only ${beatTimes.length} beats.`);
+    state.beats = beatTimes.map((t, i) => {
+      const next = i + 1 < beatTimes.length ? beatTimes[i + 1] : state.duration;
+      return { id: i, start: t, duration: Math.max(0.04, next - t) };
+    });
+
+    setProgress(58, 'Beat-synchronous feature aggregation...');
+    state.features = new Array(state.beats.length);
+    for (let bi = 0; bi < state.beats.length; bi++) {
+      if (bi % 64 === 0) {
+        setProgress(58 + (bi / state.beats.length) * 12, `Beat features ${bi}/${state.beats.length}`);
+        await chunkYield();
+      }
+      const a = Math.floor((state.beats[bi].start * state.sampleRate) / hopSize);
+      const b = Math.min(nFrames - 1, Math.floor(((state.beats[bi].start + state.beats[bi].duration) * state.sampleRate) / hopSize));
+      const c = new Float32Array(12);
+      const m = new Float32Array(13);
+      let en = 0;
+      let cnt = 0;
+      for (let fi = Math.max(0, a); fi <= Math.max(0, b); fi++) {
+        const cf = chromaFrames[fi], mf = mfccFrames[fi];
+        for (let k = 0; k < 12; k++) c[k] += cf[k];
+        for (let k = 0; k < 13; k++) m[k] += mf[k];
+        en += energies[fi];
+        cnt++;
+      }
+      const inv = 1 / Math.max(cnt, 1);
+      for (let k = 0; k < 12; k++) c[k] *= inv;
+      for (let k = 0; k < 13; k++) m[k] *= inv;
+      const feature = new Float32Array(26);
+      feature.set(c, 0);
+      feature.set(m, 12);
+      feature[25] = en * inv;
+      state.features[bi] = feature;
+    }
+
+    setProgress(72, 'Clustering beats...');
+    const requestedK = Math.max(0, parseInt($('clusterCount').value, 10) || 0);
+    state.k = requestedK > 0 ? requestedK : autoSelectK(state.features, 4, Math.min(28, Math.max(6, Math.floor(Math.sqrt(state.features.length)))));
+    state.clusters = kmeans(state.features, state.k, 40);
+
+    setProgress(82, 'Building segment map...');
+    state.segments = buildSegments(state.clusters);
+    for (let i = 0; i < state.beats.length; i++) {
+      state.beats[i].cluster = state.clusters[i];
+      state.beats[i].segment = state.segments[i];
+    }
+
+    setProgress(88, 'Computing jump candidates...');
+    const jumpWindow = Math.max(2, parseInt($('jumpWindow').value, 10) || 16);
+    const historyDepth = Math.max(1, parseInt($('historyDepth').value, 10) || 3);
+    state.jumpCandidates = computeJumpCandidates(state.beats, state.features, jumpWindow, historyDepth);
+    for (let i = 0; i < state.beats.length; i++) state.beats[i].jump_candidate = state.jumpCandidates[i];
+
+    setProgress(95, 'Generating long-form play vector...');
+    state.playVector = buildPlayVector(state.beats, 1 << 16);
+
+    state.colorMap = buildColorMap(state.k);
+    state.currentIdx = 0;
+    state.isReady = true;
+    setProgress(100, 'Analysis complete. Ready for playback.');
+    renderStats();
+    drawTimeline();
+    updateButtons();
+    log(`Analysis complete | beats=${state.beats.length}, tempo=${state.tempoBpm.toFixed(2)} BPM, clusters=${state.k}, segments=${Math.max(...state.segments) + 1}`);
+  }
+
+  function normalizeVector(x) {
+    let max = 1e-9;
+    for (let i = 0; i < x.length; i++) if (x[i] > max) max = x[i];
+    const o = new Float32Array(x.length);
+    for (let i = 0; i < x.length; i++) o[i] = x[i] / max;
+    return o;
+  }
+
+  function movingAverage(arr, w) {
+    const out = new Float32Array(arr.length);
+    let acc = 0;
+    for (let i = 0; i < arr.length; i++) {
+      acc += arr[i];
+      if (i >= w) acc -= arr[i - w];
+      out[i] = acc / Math.min(i + 1, w);
+    }
+    return out;
+  }
+
+  function estimateTempo(onset, fps, tempoBias) {
+    const minBpm = 70, maxBpm = 180;
+    const minLag = Math.floor((60 / maxBpm) * fps);
+    const maxLag = Math.floor((60 / minBpm) * fps);
+    let bestLag = minLag;
+    let bestScore = -Infinity;
+
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let s = 0;
+      for (let i = lag; i < onset.length; i++) s += onset[i] * onset[i - lag];
+      const bpm = (60 * fps) / lag;
+      const snap = 1 - Math.min(1, Math.abs(bpm - 120) / 80);
+      s *= (1 - tempoBias) + tempoBias * snap;
+      if (s > bestScore) {
+        bestScore = s;
+        bestLag = lag;
+      }
+    }
+    return (60 * fps) / bestLag;
+  }
+
+  function alignBeatsToOnsets(onset, sr, hop, beatSec) {
+    const fps = sr / hop;
+    const beatFrames = beatSec * fps;
+    const searchRadius = Math.max(2, Math.round(0.15 * beatFrames));
+
+    let first = 0;
+    let maxVal = -Infinity;
+    const firstRange = Math.min(onset.length, Math.floor(6 * fps));
+    for (let i = 0; i < firstRange; i++) {
+      if (onset[i] > maxVal) { maxVal = onset[i]; first = i; }
+    }
+
+    const beats = [];
+    let idx = first;
+    while (idx < onset.length - searchRadius) {
+      let best = idx;
+      let bestValue = -Infinity;
+      for (let o = -searchRadius; o <= searchRadius; o++) {
+        const c = Math.round(idx + o);
+        if (c < 0 || c >= onset.length) continue;
+        if (onset[c] > bestValue) { bestValue = onset[c]; best = c; }
+      }
+      beats.push(best / fps);
+      idx += beatFrames;
+    }
+    return dedupeSorted(beats, 0.06);
+  }
+
+  function dedupeSorted(values, eps) {
+    if (!values.length) return values;
+    const out = [values[0]];
+    for (let i = 1; i < values.length; i++) {
+      if (values[i] - out[out.length - 1] >= eps) out.push(values[i]);
+    }
+    return out;
+  }
+
+  function dist2(a, b) {
+    let s = 0;
+    for (let i = 0; i < a.length; i++) {
+      const d = a[i] - b[i];
+      s += d * d;
+    }
+    return s;
+  }
+
+  function kmeans(features, k, iters = 32) {
+    const n = features.length;
+    const d = features[0].length;
+    const cent = new Array(k);
+    const labels = new Int32Array(n);
+    const used = new Set();
+    for (let i = 0; i < k; i++) {
+      let r = Math.floor(Math.random() * n);
+      while (used.has(r)) r = Math.floor(Math.random() * n);
+      used.add(r);
+      cent[i] = Float32Array.from(features[r]);
+    }
+
+    for (let it = 0; it < iters; it++) {
+      let changed = 0;
+      for (let i = 0; i < n; i++) {
+        let best = 0, bestDist = Infinity;
+        for (let c = 0; c < k; c++) {
+          const dd = dist2(features[i], cent[c]);
+          if (dd < bestDist) { bestDist = dd; best = c; }
+        }
+        if (labels[i] !== best) changed++;
+        labels[i] = best;
+      }
+
+      const sums = Array.from({ length: k }, () => new Float32Array(d));
+      const cnt = new Int32Array(k);
+      for (let i = 0; i < n; i++) {
+        const c = labels[i]; cnt[c]++;
+        const f = features[i];
+        for (let j = 0; j < d; j++) sums[c][j] += f[j];
+      }
+
+      for (let c = 0; c < k; c++) {
+        if (cnt[c] === 0) continue;
+        for (let j = 0; j < d; j++) cent[c][j] = sums[c][j] / cnt[c];
+      }
+
+      if (changed / n < 0.002) break;
+    }
+    return Array.from(labels);
+  }
+
+  function autoSelectK(features, minK, maxK) {
+    let bestK = minK;
+    let bestScore = -Infinity;
+    for (let k = minK; k <= maxK; k++) {
+      const labels = kmeans(features, k, 18);
+      const score = silhouetteApprox(features, labels, k, 400);
+      if (score > bestScore) { bestScore = score; bestK = k; }
+    }
+    log(`Auto-selected clusters: k=${bestK} silhouette≈${bestScore.toFixed(4)}`);
+    return bestK;
+  }
+
+  function silhouetteApprox(features, labels, k, sampleN) {
+    const n = features.length;
+    const idx = [];
+    const step = Math.max(1, Math.floor(n / sampleN));
+    for (let i = 0; i < n; i += step) idx.push(i);
+    const groups = Array.from({ length: k }, () => []);
+    for (let i = 0; i < n; i++) groups[labels[i]].push(i);
+
+    let total = 0;
+    for (const i of idx) {
+      const li = labels[i];
+      const own = groups[li];
+      let a = 0;
+      if (own.length > 1) {
+        for (const j of own) if (j !== i) a += Math.sqrt(dist2(features[i], features[j]));
+        a /= (own.length - 1);
+      }
+      let b = Infinity;
+      for (let c = 0; c < k; c++) {
+        if (c === li || groups[c].length === 0) continue;
+        let d = 0;
+        for (const j of groups[c]) d += Math.sqrt(dist2(features[i], features[j]));
+        d /= groups[c].length;
+        if (d < b) b = d;
+      }
+      const s = (b - a) / Math.max(a, b, 1e-9);
+      total += s;
+    }
+    return total / Math.max(idx.length, 1);
+  }
+
+  function buildSegments(clusters) {
+    const seg = new Int32Array(clusters.length);
+    let cur = 0;
+    seg[0] = 0;
+    for (let i = 1; i < clusters.length; i++) {
+      if (clusters[i] !== clusters[i - 1]) cur++;
+      seg[i] = cur;
+    }
+    return Array.from(seg);
+  }
+
+  function cosine(a, b) {
+    let ab = 0, aa = 0, bb = 0;
+    for (let i = 0; i < a.length; i++) {
+      ab += a[i] * b[i]; aa += a[i] * a[i]; bb += b[i] * b[i];
+    }
+    return ab / Math.max(1e-9, Math.sqrt(aa * bb));
+  }
+
+  function computeJumpCandidates(beats, features, jumpWindow, historyDepth) {
+    const n = beats.length;
+    const out = Array.from({ length: n }, () => []);
+    for (let i = 0; i < n - 2; i++) {
+      const next = i + 1;
+      const candidates = [];
+      const minJ = Math.max(0, i - jumpWindow);
+      const maxJ = Math.min(n - 1, i + jumpWindow);
+      for (let j = minJ; j <= maxJ; j++) {
+        if (j === next || Math.abs(j - next) < historyDepth) continue;
+        if (beats[j].cluster !== beats[next].cluster) continue;
+
+        const p1 = next % 4;
+        const p2 = j % 4;
+        if (p1 !== p2) continue;
+
+        let sim = cosine(features[next], features[j]);
+        const segPenalty = beats[j].segment === beats[next].segment ? 0.04 : 0;
+        sim -= segPenalty;
+        candidates.push({ j, sim });
+      }
+      candidates.sort((a, b) => b.sim - a.sim);
+      out[i] = candidates.slice(0, 8).map(x => x.j);
+    }
+    out[n - 1] = [];
+    return out;
+  }
+
+  function buildPlayVector(beats, targetLen = 65536) {
+    const pv = [];
+    let idx = 0;
+    while (pv.length < targetLen) {
+      const jumpable = beats[idx].jump_candidate && beats[idx].jump_candidate.length > 0;
+      const remain = jumpable ? 1 + Math.floor(Math.random() * 16) : 4;
+      for (let s = 0; s <= remain && pv.length < targetLen; s++) {
+        pv.push({ beat: idx, seq_len: remain, seq_pos: s });
+        if (idx + 1 >= beats.length) {
+          idx = 0;
+        } else {
+          idx += 1;
+        }
+      }
+      const last = pv[pv.length - 1];
+      const b = beats[last.beat];
+      if (b.jump_candidate && b.jump_candidate.length) {
+        const pick = b.jump_candidate[Math.floor(Math.random() * b.jump_candidate.length)];
+        idx = pick;
+      }
+    }
+    return pv;
+  }
+
+  function buildColorMap(k) {
+    const map = [];
+    for (let i = 0; i < k; i++) {
+      const h = (i / Math.max(1, k)) * 360;
+      map.push(`hsl(${h.toFixed(1)} 74% 57%)`);
+    }
+    return map;
+  }
+
+  function drawTimeline() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0c1119';
+    ctx.fillRect(0, 0, w, h);
+
+    if (!state.beats.length) return;
+
+    const timelineY = 90;
+    const timelineH = 120;
+    const innerW = w - 20;
+    const beatW = innerW / state.beats.length;
+
+    ctx.strokeStyle = '#35415a';
+    ctx.strokeRect(10, timelineY, innerW, timelineH);
+
+    const curBeat = state.playVector.length ? state.playVector[state.currentIdx].beat : 0;
+    const curData = state.beats[curBeat];
+
+    for (let i = 0; i < state.beats.length; i++) {
+      const b = state.beats[i];
+      const x = 10 + i * beatW;
+      const active = (b.segment === curData.segment) || curData.jump_candidate.includes(i);
+      ctx.globalAlpha = active ? 1 : 0.22;
+      ctx.fillStyle = state.colorMap[b.cluster % state.colorMap.length] || '#6fa8ff';
+      ctx.fillRect(x, timelineY + 1, Math.max(1, beatW + (active ? 1 : 0)), timelineH - 2);
+    }
+    ctx.globalAlpha = 1;
+
+    const curX = 10 + curBeat * beatW;
+    ctx.strokeStyle = '#8e98ad';
+    ctx.lineWidth = Math.max(1, beatW / 2);
+    let over = true;
+    for (const j of curData.jump_candidate) {
+      const jx = 10 + j * beatW;
+      ctx.beginPath();
+      if (over) {
+        ctx.moveTo(curX + beatW * 0.5, timelineY - 4);
+        ctx.quadraticCurveTo((curX + jx) * 0.5, 14, jx + beatW * 0.5, timelineY - 4);
+      } else {
+        ctx.moveTo(curX + beatW * 0.5, timelineY + timelineH + 4);
+        ctx.quadraticCurveTo((curX + jx) * 0.5, h - 16, jx + beatW * 0.5, timelineY + timelineH + 4);
+      }
+      ctx.stroke();
+      over = !over;
+    }
+
+    ctx.fillStyle = '#111';
+    ctx.fillRect(curX, timelineY - 6, Math.max(2, beatW), timelineH + 12);
+
+    const seq = state.playVector[state.currentIdx] || { seq_len: 0, seq_pos: 0 };
+    const left = seq.seq_len - seq.seq_pos;
+
+    ctx.fillStyle = '#dce7ff';
+    ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillText(`Current Beat: ${curBeat} | Seq Left: ${left} | Tempo: ${state.tempoBpm.toFixed(2)} BPM`, 12, 245);
+  }
+
+  function renderStats() {
+    const segCount = state.segments.length ? Math.max(...state.segments) + 1 : 0;
+    const avgJump = state.jumpCandidates.reduce((a, b) => a + b.length, 0) / Math.max(1, state.jumpCandidates.length);
+    const cards = [
+      ['File', state.file ? state.file.name : '-'],
+      ['Duration', `${state.duration.toFixed(2)} s`],
+      ['Sample Rate', `${state.sampleRate} Hz`],
+      ['Beats', `${state.beats.length}`],
+      ['Tempo', `${state.tempoBpm.toFixed(2)} BPM`],
+      ['Clusters', `${state.k}`],
+      ['Segments', `${segCount}`],
+      ['Avg Jump Options', `${avgJump.toFixed(2)}`],
+      ['Play Vector', `${state.playVector.length}`],
+      ['Beat Duration', `${state.beatSec.toFixed(4)} s`],
+      ['Channels', `${state.audioBuffer ? state.audioBuffer.numberOfChannels : 0}`],
+      ['State', state.isPlaying ? 'Playing' : (state.isPaused ? 'Paused' : 'Ready')],
+    ];
+    statsBox.innerHTML = cards.map(([k, v]) => `<div class="stat"><span class="k">${k}</span>${v}</div>`).join('');
+  }
+
+  function stopPlaybackInternal() {
+    if (state.schedulerId) {
+      cancelAnimationFrame(state.schedulerId);
+      state.schedulerId = null;
+    }
+    if (state.activeNode) {
+      try { state.activeNode.stop(); } catch {}
+      state.activeNode.disconnect();
+      state.activeNode = null;
+    }
+    state.isPlaying = false;
+  }
+
+  function playFrom(index) {
+    const ac = ensureAudioContext();
+    if (!state.isReady) return;
+    stopPlaybackInternal();
+    state.isPlaying = true;
+    state.isPaused = false;
+    state.currentIdx = index;
+    state.startTimeCtx = ac.currentTime - state.beats[state.playVector[state.currentIdx].beat].start;
+
+    const scheduleNext = () => {
+      if (!state.isPlaying) return;
+      const pv = state.playVector[state.currentIdx];
+      const beat = state.beats[pv.beat];
+      const src = ac.createBufferSource();
+      src.buffer = state.audioBuffer;
+      src.connect(ac.destination);
+      src.start(0, beat.start, beat.duration);
+      state.activeNode = src;
+      src.onended = () => {
+        if (!state.isPlaying) return;
+        state.currentIdx = (state.currentIdx + 1) % state.playVector.length;
+        drawTimeline();
+        renderStats();
+        state.schedulerId = requestAnimationFrame(scheduleNext);
+      };
+    };
+
+    scheduleNext();
+    updateButtons();
+    drawTimeline();
+    renderStats();
+  }
+
+  function pausePlayback() {
+    if (!state.isPlaying) return;
+    state.isPaused = true;
+    state.pauseAtSec = state.beats[state.playVector[state.currentIdx].beat].start;
+    stopPlaybackInternal();
+    updateButtons();
+    renderStats();
+  }
+
+  function stopPlayback() {
+    state.isPaused = false;
+    state.currentIdx = 0;
+    stopPlaybackInternal();
+    updateButtons();
+    drawTimeline();
+    renderStats();
+  }
+
+  function updateButtons() {
+    const r = state.isReady;
+    playBtn.disabled = !r || state.isPlaying;
+    pauseBtn.disabled = !r || !state.isPlaying;
+    stopBtn.disabled = !r;
+    rebuildBtn.disabled = !r;
+    engineState.textContent = `Engine: ${state.isPlaying ? 'playing' : (state.isPaused ? 'paused' : (r ? 'ready' : 'idle'))}`;
+  }
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (!fileInput.files.length) {
+      alert('Select an audio file first.');
+      return;
+    }
+    state.file = fileInput.files[0];
+    state.isReady = false;
+    stopPlayback();
+    logBox.textContent = '';
+    updateButtons();
+    try {
+      log('Starting analysis pipeline.');
+      await analyzeAudio();
+    } catch (err) {
+      setProgress(0, 'Analysis failed.');
+      log(`ERROR: ${err.message}`);
+      alert(`Analysis failed: ${err.message}`);
+      state.isReady = false;
+      updateButtons();
+    }
+  });
+
+  playBtn.addEventListener('click', async () => {
+    await ensureAudioContext().resume();
+    if (state.isPaused) {
+      playFrom(state.currentIdx);
+      return;
+    }
+    playFrom(state.currentIdx);
+  });
+
+  pauseBtn.addEventListener('click', pausePlayback);
+  stopBtn.addEventListener('click', stopPlayback);
+
+  rebuildBtn.addEventListener('click', () => {
+    if (!state.isReady) return;
+    state.playVector = buildPlayVector(state.beats, 1 << 16);
+    state.currentIdx = 0;
+    drawTimeline();
+    renderStats();
+    log('Rebuilt play vector with existing beat graph.');
+  });
+
+  window.addEventListener('resize', drawTimeline);
+
+  updateButtons();
+  drawTimeline();
+})();
+</script>
+</body>
 </html>
