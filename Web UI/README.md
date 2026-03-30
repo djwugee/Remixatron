@@ -59,6 +59,19 @@ Alternatively, a dockerfile is provided.
 
 # Connecting
 
+
+# Streamlit GUI (full Web UI port)
+
+A full Streamlit-based GUI is included in `streamlit_app.py`. It mirrors the Web UI workflow: YouTube/local file ingest, configurable clustering, beat-map generation, remix preview playback/download, jump-candidate inspection, and bookmark management.
+
+Run it from the `Web UI` directory:
+
+```
+streamlit run streamlit_app.py
+```
+
+The Streamlit app uses the same `~/.remixatron` bookmark/cache directory as the Flask UI.
+
 Just navigate to http://localhost:8000 with a browser running on the same machine as the server. If you want to connect from another machine on your LAN, then you'll need to edit the cors.cfg file to allow it. For example, suppose your computer is named *mymachine.local*, the correct CORS config to allow it and localhost will be:
 
     {

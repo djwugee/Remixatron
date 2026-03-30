@@ -53,3 +53,4 @@ websockets
 Werkzeug
 youtube-dl
 yt-dlp
+streamlit
