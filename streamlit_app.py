@@ -409,4 +409,4 @@ if 'jukebox' in st.session_state:
     </script>
     """
 
-    st.components.v1.html(html_code, height=450)
+    st.iframe(html_code, height=450)
