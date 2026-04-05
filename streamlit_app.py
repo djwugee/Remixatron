@@ -37,19 +37,26 @@ def save_bookmarks(bookmarks):
 def fetch_from_youtube(url, status_callback):
     status_callback("Asking YouTube for audio...")
     tmp_base = os.path.join(tempfile.gettempdir(), 'remixatron_yt')
+    # Common arguments for yt-dlp to be more robust
+    common_args = [
+        '--no-playlist',
+        '--no-check-certificates',
+        '--js-runtimes', 'node',
+        '--extractor-args', 'youtube:player-client=web,mweb,android,ios'
+    ]
+
     # Use yt-dlp to download audio and metadata
     try:
         # Get metadata first
-        cmd_info = ['yt-dlp', '--dump-json', '--no-playlist', url]
+        cmd_info = ['yt-dlp', '--dump-json'] + common_args + [url]
         info_json = subprocess.check_output(cmd_info).decode('utf-8')
         info = json.loads(info_json)
         title = info.get('title', 'Unknown Title')
         thumbnail = info.get('thumbnail', '')
 
         # Download audio
-        cmd_dl = ['yt-dlp', '-x', '--audio-format', 'wav',
-                  '-f', 'bestaudio', '--no-playlist', '-o', tmp_base + '.%(ext)s', url]
-        subprocess.check_output(cmd_dl)
+        cmd_dl = ['yt-dlp', '-x', '--audio-format', 'wav', '-f', 'bestaudio', '-o', tmp_base + '.%(ext)s'] + common_args + [url]
+        subprocess.check_output(cmd_dl, stderr=subprocess.STDOUT)
 
         file_path = tmp_base + '.wav'
         if not os.path.exists(file_path):
@@ -60,6 +67,11 @@ def fetch_from_youtube(url, status_callback):
                      break
 
         return file_path, {"title": title, "thumbnail": thumbnail, "url": url}
+    except subprocess.CalledProcessError as e:
+        st.error(f"Failed to download audio: yt-dlp command failed with exit status {e.returncode}")
+        if e.output:
+             st.error(f"yt-dlp error: {e.output.decode('utf-8', errors='ignore')}")
+        return None, None
     except Exception as e:
         st.error(f"Failed to download audio: {e}")
         return None, None
