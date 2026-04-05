@@ -184,17 +184,17 @@ class InfiniteJukebox(object):
         # trim the silences from each end
         #
 
-        y, sr = librosa.core.load(self.__filename, mono=False, sr=None)
+        y, sr = librosa.load(self.__filename, mono=False, sr=None)
         y, _ = librosa.effects.trim(y)
 
-        self.duration = librosa.core.get_duration(y,sr)
+        self.duration = librosa.get_duration(y=y, sr=sr)
         self.raw_audio = (y * np.iinfo(np.int16).max).astype(np.int16).T.copy(order='C')
         self.sample_rate = sr
 
         # after the raw audio bytes are saved, convert the samples to mono
         # because the beat detection algorithm in librosa requires it.
 
-        y = librosa.core.to_mono(y)
+        y = librosa.to_mono(y)
 
         self.__report_progress( .2, "computing pitch data..." )
 
@@ -210,11 +210,10 @@ class InfiniteJukebox(object):
 
         ##########################################################
         # To reduce dimensionality, we'll beat-synchronous the CQT
-        tempo, btz = librosa.beat.beat_track(y=y, sr=sr, trim=False)
-        # tempo, btz = librosa.beat.beat_track(y=y, sr=sr)
+        tempo, btz = librosa.beat.beat_track(y=y, sr=sr)
         Csync = librosa.util.sync(C, btz, aggregate=np.median)
 
-        self.tempo = tempo
+        self.tempo = float(tempo[0])
 
         # For alignment purposes, we'll need the timing of the beats
         # we fix_frames to include non-beat frames 0 and C.shape[1] (final frame)
