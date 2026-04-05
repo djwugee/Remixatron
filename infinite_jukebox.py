@@ -11,18 +11,25 @@ import curses
 import curses.textpad
 import numpy as np
 import os
-import pygame
-import pygame.event
-import pygame.locals
+try:
+    import pygame
+    import pygame.event
+    import pygame.locals
+    from pygame import mixer
+    HAS_PYGAME = True
+except ImportError:
+    HAS_PYGAME = False
 import signal
 import soundfile as sf
 import sys
 import time
 
 from Remixatron import InfiniteJukebox
-from pygame import mixer
 
-SOUND_FINISHED = pygame.locals.USEREVENT + 1
+if HAS_PYGAME:
+    SOUND_FINISHED = pygame.locals.USEREVENT + 1
+else:
+    SOUND_FINISHED = None
 
 def process_args():
 
@@ -206,7 +213,8 @@ def cleanup():
     print(w_str.rstrip())
     print
 
-    mixer.quit()
+    if HAS_PYGAME:
+        mixer.quit()
 
 def graceful_exit(signum, frame):
 
@@ -241,6 +249,13 @@ def save_to_file(jukebox, label, duration):
 
 if __name__ == "__main__":
 
+    args = process_args()
+
+    if not HAS_PYGAME and not args.save:
+        print("Error: pygame is not installed. Interactive playback is disabled.")
+        print("You can still use the -save option to save the remix to a WAV file.")
+        sys.exit(1)
+
     # store the original SIGINT handler and install a new handler
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, graceful_exit)
@@ -250,8 +265,6 @@ if __name__ == "__main__":
     #
 
     window = None
-
-    args = process_args()
 
     curses.setupterm()
 

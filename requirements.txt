@@ -7,7 +7,6 @@ llvmlite
 numba
 numpy
 pycparser
-pygame
 resampy
 scikit-learn
 scipy
