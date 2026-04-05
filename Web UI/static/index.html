@@ -1,133 +1,1179 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-title" content="Remixatron">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Remixatron Offline (Single-File Native HTML + JS)</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1116;
+      --panel: #171a22;
+      --panel-2: #202532;
+      --accent: #4ad9ff;
+      --text: #e6edf3;
+      --muted: #9ba8b8;
+      --good: #37d67a;
+      --warn: #ffbd4a;
+      --err: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 900px at 30% -20%, #172233 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, #131722 100%);
+      border: 1px solid #2a3343;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    h1 { font-size: 1.05rem; margin: 0 0 8px; }
+    h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+    .stack { display: grid; gap: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    button, input, select {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid #344158;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+    }
+    button {
+      cursor: pointer;
+      border-color: #436089;
+      background: linear-gradient(180deg, #26344d, #1d2a3f);
+      font-weight: 600;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .grow { flex: 1; }
+    .status { font-size: 0.9rem; color: var(--muted); min-height: 1.4em; }
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #111826;
+      border: 1px solid #2a3448;
+      overflow: hidden;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3a9cff, var(--accent));
+      transition: width 130ms linear;
+    }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; }
+    .metric {
+      background: #111824;
+      border: 1px solid #253145;
+      border-radius: 10px;
+      padding: 8px;
+    }
+    .metric .k { color: var(--muted); }
+    .metric .v { font-weight: 700; margin-top: 4px; }
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: #0e1420;
+      border-radius: 12px;
+      border: 1px solid #263146;
+      display: block;
+    }
+    .logs {
+      background: #0c121d;
+      border: 1px solid #233047;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      padding: 8px;
+      max-height: 220px;
+      overflow: auto;
+      white-space: pre-wrap;
+      color: #bcd1f1;
+    }
+    @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card stack">
+      <h1>Remixatron Offline Engine</h1>
+      <h2>Single-file native HTML+JS, local file only, no network services.</h2>
 
-    <title>Remixatron</title>
+      <div class="row">
+        <input id="fileInput" class="grow" type="file" accept="audio/*" />
+      </div>
+      <div class="row">
+        <label>Clusters</label>
+        <input id="clusterInput" type="number" min="0" max="64" value="0" style="width:80px" />
+        <button id="analyzeBtn" class="grow">Analyze</button>
+      </div>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="status" id="status">Idle.</div>
 
-    <link rel="apple-touch-icon" href="/mobile-icon.png">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+      <div class="row">
+        <button id="playBtn" class="grow" disabled>Play Remix</button>
+        <button id="stopBtn" class="grow" disabled>Stop</button>
+      </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.1/umd/popper.min.js" integrity="sha512-g2PN+aYR0KupTVwea5Ppqw4bxWLLypWdd+h7E0ydT8zF+/Y2Qpk8Y1SnzVw6ZCVJPrgB/91s3VfhVhP7Y4+ucw==" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js" integrity="sha512-6+YN/9o9BWrk6wSfGxQGpt3EUK6XeHi6yeHV+TYD2GR0Sj/cggRpXr1BrAQf0as6XslxomMUxXp2vIl+fv0QRA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <div class="metrics">
+        <div class="metric"><div class="k">Tempo</div><div class="v" id="mTempo">-</div></div>
+        <div class="metric"><div class="k">Beats</div><div class="v" id="mBeats">-</div></div>
+        <div class="metric"><div class="k">Clusters</div><div class="v" id="mClusters">-</div></div>
+        <div class="metric"><div class="k">Segments</div><div class="v" id="mSegments">-</div></div>
+      </div>
 
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+      <div class="row">
+        <button id="downloadBtn" class="grow" disabled>Download Beatmap+PlayVector JSON</button>
+      </div>
+      <div class="logs" id="logs"></div>
+    </section>
 
-    <style>
+    <section class="card stack">
+      <h1>Beat/Cluster Timeline</h1>
+      <canvas id="viz" width="900" height="420"></canvas>
+      <div class="status">Top strip = beat cluster labels, bottom strip = play vector path preview.</div>
+    </section>
+  </div>
 
-      .hi {
-        color: white
+  <script>
+  (() => {
+    'use strict';
+
+    const $ = (id) => document.getElementById(id);
+    const fileInput = $('fileInput');
+    const clusterInput = $('clusterInput');
+    const analyzeBtn = $('analyzeBtn');
+    const playBtn = $('playBtn');
+    const stopBtn = $('stopBtn');
+    const downloadBtn = $('downloadBtn');
+    const bar = $('bar');
+    const statusEl = $('status');
+    const logsEl = $('logs');
+    const viz = $('viz');
+    const ctx2d = viz.getContext('2d');
+
+    const state = {
+      audioFile: null,
+      audioBuffer: null,
+      mono: null,
+      sampleRate: 0,
+      beatmap: [],
+      playVector: [],
+      tempo: 0,
+      clusters: 0,
+      segments: 0,
+      workers: [],
+      audioCtx: null,
+      playing: false,
+      sourceNode: null,
+      timerId: null,
+      playCursor: 0,
+      messageSeq: 0,
+      webgpu: null
+    };
+
+    const LOG_LIMIT = 500;
+    function log(line) {
+      const stamp = new Date().toISOString().slice(11, 19);
+      logsEl.textContent += `[${stamp}] ${line}\n`;
+      const lines = logsEl.textContent.split('\n');
+      if (lines.length > LOG_LIMIT) logsEl.textContent = lines.slice(lines.length - LOG_LIMIT).join('\n');
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+
+    function setStatus(text, pct = null) {
+      statusEl.textContent = text;
+      if (pct !== null) bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    }
+
+    function setMetrics() {
+      $('mTempo').textContent = state.tempo ? `${state.tempo.toFixed(1)} BPM` : '-';
+      $('mBeats').textContent = state.beatmap.length || '-';
+      $('mClusters').textContent = state.clusters || '-';
+      $('mSegments').textContent = state.segments || '-';
+    }
+
+    fileInput.addEventListener('change', () => {
+      state.audioFile = fileInput.files?.[0] ?? null;
+      log(state.audioFile ? `Selected file: ${state.audioFile.name}` : 'No file selected');
+    });
+
+    async function ensureAudioCtx() {
+      if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+      return state.audioCtx;
+    }
+
+    function monoFromBuffer(buffer) {
+      const channels = buffer.numberOfChannels;
+      const length = buffer.length;
+      const mono = new Float32Array(length);
+      if (channels === 1) {
+        mono.set(buffer.getChannelData(0));
+        return mono;
+      }
+      for (let c = 0; c < channels; c++) {
+        const src = buffer.getChannelData(c);
+        for (let i = 0; i < length; i++) mono[i] += src[i] / channels;
+      }
+      return mono;
+    }
+
+    function createWorkerPool(count) {
+      const workerSrc = `
+      'use strict';
+
+      function hann(n, N) { return 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (N - 1)); }
+
+      function fft(re, im) {
+        const n = re.length;
+        for (let i = 1, j = 0; i < n; i++) {
+          let bit = n >> 1;
+          for (; j & bit; bit >>= 1) j ^= bit;
+          j ^= bit;
+          if (i < j) {
+            [re[i], re[j]] = [re[j], re[i]];
+            [im[i], im[j]] = [im[j], im[i]];
+          }
+        }
+        for (let len = 2; len <= n; len <<= 1) {
+          const ang = -2 * Math.PI / len;
+          const wlenCos = Math.cos(ang);
+          const wlenSin = Math.sin(ang);
+          for (let i = 0; i < n; i += len) {
+            let wCos = 1, wSin = 0;
+            for (let j = 0; j < len / 2; j++) {
+              const uRe = re[i + j], uIm = im[i + j];
+              const vRe = re[i + j + len/2] * wCos - im[i + j + len/2] * wSin;
+              const vIm = re[i + j + len/2] * wSin + im[i + j + len/2] * wCos;
+              re[i + j] = uRe + vRe;
+              im[i + j] = uIm + vIm;
+              re[i + j + len/2] = uRe - vRe;
+              im[i + j + len/2] = uIm - vIm;
+              const nextCos = wCos * wlenCos - wSin * wlenSin;
+              const nextSin = wCos * wlenSin + wSin * wlenCos;
+              wCos = nextCos;
+              wSin = nextSin;
+            }
+          }
+        }
       }
 
-      .vl {
-        border-left: 1px solid lightgray;
-        height: 38px;
-        width: 2px;
-        margin-left: 40px;
-        margin-right: 10px;
-        margin-top: 0px;
-        margin-bottom: 0px;
+      function frameEnergy(samples, frameSize, hop) {
+        const out = [];
+        for (let s = 0; s + frameSize < samples.length; s += hop) {
+          let e = 0;
+          for (let i = 0; i < frameSize; i++) {
+            const v = samples[s + i];
+            e += v * v;
+          }
+          out.push(Math.sqrt(e / frameSize));
+        }
+        return out;
       }
-      
-    </style>
 
-  </head>
-  <body>
+      function diffPositive(arr) {
+        const out = new Float32Array(arr.length);
+        out[0] = 0;
+        for (let i = 1; i < arr.length; i++) out[i] = Math.max(0, arr[i] - arr[i - 1]);
+        return out;
+      }
 
-  <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand mr-auto" href="#">
-        <img src="/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
-        Remixatron
-      </a>
-      <button id="toggler" class="navbar-toggler p-0 mb-2" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-      </button>
+      function normalize(arr) {
+        let max = 0;
+        for (let i = 0; i < arr.length; i++) max = Math.max(max, Math.abs(arr[i]));
+        if (max === 0) return arr;
+        const out = new Float32Array(arr.length);
+        for (let i = 0; i < arr.length; i++) out[i] = arr[i] / max;
+        return out;
+      }
 
-      <div class="collapse navbar-collapse show" id="navbarSupportedContent">
-        <form class="d-flex flex-row flex-grow-1" onsubmit="return fetchURL();">
-          <div class="dropdown">
-            <button class="btn btn-sm btn-dark dropdown-toggle m-1 p-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons-outlined m-0 p-1 hi">star_border</i>
-            </button>
-            <div class="dropdown-menu pre-scrollable" id="ddhistory" aria-labelledby="dropdownMenuButton">
-            </div>
-          </div>
-          <input class="form-control ml-lg-2 mr-0" type="search" placeholder="Enter YouTube URL here..." id="ytURL">
-          <button class="btn btn-lg m-0 p-0" type="button" onclick="fetchURL();">
-            <i class="material-icons m-0 p-1 hi">search</i>
-          </button>
-        </form>
-        <form class="d-flex flex-row m-1" id="upload_form" enctype="multipart/form-data" onsubmit="return upload_audio();">
-          <div class="custom-file">
-            <input type="file" class="custom-file-input" onchange="on_file_selected();" id="fcu" name="file">
-            <label id="fcuLabel" for="fcu" class="custom-file-label">Select a file to upload...</label>
-          </div>
-        </form>
-      </div>
-    </nav>
+      function movingAverage(arr, radius) {
+        const out = new Float32Array(arr.length);
+        for (let i = 0; i < arr.length; i++) {
+          let sum = 0, c = 0;
+          for (let j = Math.max(0, i - radius); j <= Math.min(arr.length - 1, i + radius); j++) {
+            sum += arr[j]; c++;
+          }
+          out[i] = sum / c;
+        }
+        return out;
+      }
 
-    <canvas id='viz' width="200" height="200"></canvas>
+      function autoCorrelate(x, minLag, maxLag) {
+        let bestLag = minLag;
+        let bestVal = -Infinity;
+        for (let lag = minLag; lag <= maxLag; lag++) {
+          let sum = 0;
+          for (let i = 0; i + lag < x.length; i++) sum += x[i] * x[i + lag];
+          if (sum > bestVal) { bestVal = sum; bestLag = lag; }
+        }
+        return { bestLag, bestVal };
+      }
 
-    <!-- define progress bar modal -->
-    <div id='progress-modal' class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header text-center">
-            <h5 class="modal-title w-100" id="progress-title">Progress</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="progress" style="height: 40px;">
-              <div id="progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <h5 id="progress-message" class="justify-content-center d-flex w-100 align-middle"></h5>
-            <button class="btn" type="button" onclick="cancel_fetch();">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
+      function pickBeatFrames(onset, period) {
+        const beats = [];
+        const local = movingAverage(onset, Math.floor(period * 0.5));
+        let i = 0;
+        while (i < onset.length) {
+          const end = Math.min(onset.length, i + period);
+          let maxIdx = i;
+          let maxV = -Infinity;
+          for (let k = i; k < end; k++) {
+            const v = onset[k] - local[k];
+            if (v > maxV) { maxV = v; maxIdx = k; }
+          }
+          beats.push(maxIdx);
+          i += period;
+        }
+        const dedup = [];
+        for (const b of beats) if (dedup.length === 0 || b - dedup[dedup.length - 1] > 1) dedup.push(b);
+        return dedup;
+      }
 
-    <!-- define the Now Playing toast -->
-    <div role="alert" class="toast sticky-bottom" data-autohide="false" data-delay="10000">
-      <div class="toast-header">
-        <img id='npimg' src="" class="rounded mr-2" height="64px">
-        <strong id="np-header-text" class="mr-auto text-center">Now Playing</strong>
-        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="toast-header">
-        <button class="btn btn-sm" type="button" onclick="playback(false);">
-          <i id='playIcon' class="material-icons">pause_circle_outline</i>
-        </button>
-        <button class="btn btn-sm" type="button" onclick="toggle_to_history();">
-            <i id='starIcon' class="material-icons">star_border</i>
-        </button>
+      function extractBeatFeature(samples, sr, start, end, fftSize = 2048, bands = 24) {
+        const hop = fftSize >> 2;
+        const win = new Float32Array(fftSize);
+        for (let i = 0; i < fftSize; i++) win[i] = hann(i, fftSize);
 
-        <div class="vl"></div>
+        const feat = new Float32Array(bands);
+        let frames = 0;
+        for (let p = start; p + fftSize < end; p += hop) {
+          const re = new Float32Array(fftSize);
+          const im = new Float32Array(fftSize);
+          for (let i = 0; i < fftSize; i++) re[i] = samples[p + i] * win[i];
+          fft(re, im);
+          const half = fftSize >> 1;
+          const mags = new Float32Array(half);
+          for (let i = 1; i < half; i++) mags[i] = Math.log1p(Math.sqrt(re[i]*re[i] + im[i]*im[i]));
 
-        <input class="form-control" style="width: 60px;" type="number" id="clusterSize" 
-               placeholder="0" value="0" min="0" 
-               onchange="clusters=parseInt(this.value); clusters = isNaN(clusters) ? 0: clusters; console.log(clusters);"/>
-        <button class="btn btn-sm" type="button" onclick="advancedFetch();">
-          <i id='redoIcon' class="material-icons">redo</i>
-        </button>
-      </div>
-    </div>
+          const hzPerBin = sr / fftSize;
+          const maxHz = sr * 0.5;
+          for (let b = 0; b < bands; b++) {
+            const f0 = Math.pow(maxHz, b / bands);
+            const f1 = Math.pow(maxHz, (b + 1) / bands);
+            const i0 = Math.max(1, Math.floor(f0 / hzPerBin));
+            const i1 = Math.min(half - 1, Math.max(i0 + 1, Math.floor(f1 / hzPerBin)));
+            let sum = 0;
+            for (let i = i0; i < i1; i++) sum += mags[i];
+            feat[b] += sum / Math.max(1, i1 - i0);
+          }
+          frames++;
+        }
+        if (frames > 0) for (let i = 0; i < feat.length; i++) feat[i] /= frames;
 
-    <script src="index.js"></script>
+        let norm = 0;
+        for (let i = 0; i < feat.length; i++) norm += feat[i] * feat[i];
+        norm = Math.sqrt(norm) || 1;
+        for (let i = 0; i < feat.length; i++) feat[i] /= norm;
+        return feat;
+      }
 
-  </body>
+      function kmeans(data, k, iterations = 60) {
+        const n = data.length;
+        const d = data[0].length;
+        const centers = [];
+        const used = new Set();
+        while (centers.length < k) {
+          const idx = Math.floor(Math.random() * n);
+          if (!used.has(idx)) { used.add(idx); centers.push(Float32Array.from(data[idx])); }
+        }
+        const labels = new Int32Array(n);
+        for (let it = 0; it < iterations; it++) {
+          for (let i = 0; i < n; i++) {
+            let best = 0;
+            let bestDist = Infinity;
+            for (let c = 0; c < k; c++) {
+              let dist = 0;
+              for (let j = 0; j < d; j++) {
+                const diff = data[i][j] - centers[c][j];
+                dist += diff * diff;
+              }
+              if (dist < bestDist) { bestDist = dist; best = c; }
+            }
+            labels[i] = best;
+          }
+          const sums = Array.from({ length: k }, () => new Float32Array(d));
+          const counts = new Int32Array(k);
+          for (let i = 0; i < n; i++) {
+            const c = labels[i];
+            counts[c]++;
+            for (let j = 0; j < d; j++) sums[c][j] += data[i][j];
+          }
+          for (let c = 0; c < k; c++) {
+            if (counts[c] === 0) continue;
+            for (let j = 0; j < d; j++) centers[c][j] = sums[c][j] / counts[c];
+          }
+        }
+        return labels;
+      }
+
+      function silhouette(data, labels, k) {
+        const n = data.length;
+        const clusters = Array.from({ length: k }, () => []);
+        for (let i = 0; i < n; i++) clusters[labels[i]].push(i);
+        let total = 0;
+        for (let i = 0; i < n; i++) {
+          const c = labels[i];
+          let a = 0;
+          if (clusters[c].length > 1) {
+            for (const j of clusters[c]) if (j !== i) {
+              let d = 0;
+              for (let m = 0; m < data[i].length; m++) {
+                const diff = data[i][m] - data[j][m];
+                d += diff * diff;
+              }
+              a += Math.sqrt(d);
+            }
+            a /= (clusters[c].length - 1);
+          }
+          let b = Infinity;
+          for (let c2 = 0; c2 < k; c2++) if (c2 !== c && clusters[c2].length > 0) {
+            let avg = 0;
+            for (const j of clusters[c2]) {
+              let d = 0;
+              for (let m = 0; m < data[i].length; m++) {
+                const diff = data[i][m] - data[j][m];
+                d += diff * diff;
+              }
+              avg += Math.sqrt(d);
+            }
+            avg /= clusters[c2].length;
+            if (avg < b) b = avg;
+          }
+          const s = (b - a) / Math.max(a, b, 1e-9);
+          total += isFinite(s) ? s : 0;
+        }
+        return total / n;
+      }
+
+      self.onmessage = (ev) => {
+        const { type, payload } = ev.data;
+        if (type === 'beat-detect') {
+          const { mono, sr } = payload;
+          const frameSize = 1024;
+          const hop = 256;
+          const energy = frameEnergy(mono, frameSize, hop);
+          const onset = normalize(diffPositive(energy));
+
+          const fps = sr / hop;
+          const minLag = Math.floor(fps * 60 / 220);
+          const maxLag = Math.floor(fps * 60 / 60);
+          const { bestLag } = autoCorrelate(onset, minLag, maxLag);
+          const tempo = 60 * fps / bestLag;
+          const beatFrames = pickBeatFrames(onset, bestLag);
+          const beatTimes = beatFrames.map(f => (f * hop) / sr);
+
+          self.postMessage({ type: 'beat-detect-done', payload: { tempo, beatTimes, onset: Array.from(onset), hop } });
+          return;
+        }
+
+        if (type === 'beat-features') {
+          const { mono, sr, intervals, chunkStart } = payload;
+          const feats = [];
+          const amps = [];
+          for (let i = 0; i < intervals.length; i++) {
+            const [start, end] = intervals[i];
+            let amp = 0;
+            for (let s = start; s < end; s++) amp += Math.abs(mono[s]);
+            amp /= Math.max(1, end - start);
+            amps.push(amp);
+            feats.push(Array.from(extractBeatFeature(mono, sr, start, end)));
+          }
+          self.postMessage({ type: 'beat-features-done', payload: { chunkStart, feats, amps } });
+          return;
+        }
+
+        if (type === 'cluster-auto') {
+          const { embedding, forcedK } = payload;
+          const data = embedding.map(v => Float32Array.from(v));
+          if (forcedK > 0) {
+            const labels = kmeans(data, forcedK, 80);
+            self.postMessage({ type: 'cluster-auto-done', payload: { labels: Array.from(labels), k: forcedK } });
+            return;
+          }
+          let best = { score: -Infinity, k: 4, labels: null };
+          const maxK = Math.min(40, Math.max(4, Math.floor(data.length / 4)));
+          for (let k = Math.min(maxK, 24); k >= 4; k--) {
+            const labels = kmeans(data, k, 50);
+            const sil = silhouette(data, labels, k);
+            let segs = 1;
+            for (let i = 1; i < labels.length; i++) if (labels[i] !== labels[i - 1]) segs++;
+            const ratio = segs / k;
+            const score = k * sil * ratio;
+            if (score > best.score) best = { score, k, labels };
+          }
+          self.postMessage({ type: 'cluster-auto-done', payload: { labels: Array.from(best.labels), k: best.k } });
+          return;
+        }
+      };
+      `;
+
+      const blob = new Blob([workerSrc], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      const workers = [];
+      for (let i = 0; i < count; i++) workers.push(new Worker(url));
+      return { workers, url };
+    }
+
+    async function initWebGPU() {
+      if (!('gpu' in navigator)) throw new Error('WebGPU unavailable in this browser.');
+      const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+      if (!adapter) throw new Error('No GPU adapter found.');
+      const device = await adapter.requestDevice();
+      return { adapter, device };
+    }
+
+    async function computeSimilarityWebGPU(features, progressCb) {
+      const n = features.length;
+      const d = features[0].length;
+      if (!state.webgpu) state.webgpu = await initWebGPU();
+      const device = state.webgpu.device;
+
+      const flat = new Float32Array(n * d);
+      for (let i = 0; i < n; i++) flat.set(features[i], i * d);
+
+      const vecBuffer = device.createBuffer({
+        size: flat.byteLength,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      });
+      new Float32Array(vecBuffer.getMappedRange()).set(flat);
+      vecBuffer.unmap();
+
+      const outSize = n * n * 4;
+      const outBuffer = device.createBuffer({
+        size: outSize,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+      });
+      const readBuffer = device.createBuffer({
+        size: outSize,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+      });
+
+      const param = new Uint32Array([n, d]);
+      const paramBuffer = device.createBuffer({
+        size: param.byteLength,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+      });
+      new Uint32Array(paramBuffer.getMappedRange()).set(param);
+      paramBuffer.unmap();
+
+      const shader = device.createShaderModule({
+        code: `
+          struct Params { n: u32, d: u32 };
+          @group(0) @binding(0) var<storage, read> v: array<f32>;
+          @group(0) @binding(1) var<storage, read_write> outM: array<f32>;
+          @group(0) @binding(2) var<uniform> p: Params;
+
+          @compute @workgroup_size(8, 8, 1)
+          fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+            let i = gid.x;
+            let j = gid.y;
+            if (i >= p.n || j >= p.n) { return; }
+
+            var dot: f32 = 0.0;
+            var ni: f32 = 0.0;
+            var nj: f32 = 0.0;
+            for (var k: u32 = 0u; k < p.d; k = k + 1u) {
+              let a = v[i * p.d + k];
+              let b = v[j * p.d + k];
+              dot = dot + a * b;
+              ni = ni + a * a;
+              nj = nj + b * b;
+            }
+            let denom = sqrt(max(ni * nj, 1e-12));
+            let sim = dot / denom;
+            outM[i * p.n + j] = max(0.0, sim);
+          }
+        `
+      });
+
+      const pipeline = device.createComputePipeline({
+        layout: 'auto',
+        compute: { module: shader, entryPoint: 'main' }
+      });
+
+      const bindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: { buffer: vecBuffer } },
+          { binding: 1, resource: { buffer: outBuffer } },
+          { binding: 2, resource: { buffer: paramBuffer } }
+        ]
+      });
+
+      const encoder = device.createCommandEncoder();
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(pipeline);
+      pass.setBindGroup(0, bindGroup);
+      pass.dispatchWorkgroups(Math.ceil(n / 8), Math.ceil(n / 8));
+      pass.end();
+      encoder.copyBufferToBuffer(outBuffer, 0, readBuffer, 0, outSize);
+      device.queue.submit([encoder.finish()]);
+
+      progressCb('Running WebGPU similarity kernel...', 46);
+      await readBuffer.mapAsync(GPUMapMode.READ);
+      const result = new Float32Array(readBuffer.getMappedRange()).slice();
+      readBuffer.unmap();
+
+      const matrix = Array.from({ length: n }, (_, r) => result.subarray(r * n, (r + 1) * n));
+      return matrix;
+    }
+
+    function gaussianSmooth(values, radius = 3) {
+      const out = new Float32Array(values.length);
+      const sigma = Math.max(1, radius / 2);
+      const weights = [];
+      let wsum = 0;
+      for (let i = -radius; i <= radius; i++) {
+        const w = Math.exp(-(i * i) / (2 * sigma * sigma));
+        weights.push(w); wsum += w;
+      }
+      for (let i = 0; i < values.length; i++) {
+        let sum = 0;
+        for (let j = -radius; j <= radius; j++) {
+          const idx = Math.max(0, Math.min(values.length - 1, i + j));
+          sum += values[idx] * weights[j + radius];
+        }
+        out[i] = sum / wsum;
+      }
+      return out;
+    }
+
+    function buildPathMatrix(features) {
+      const n = features.length;
+      const out = Array.from({ length: n }, () => new Float32Array(n));
+      for (let i = 0; i < n - 1; i++) {
+        let dist = 0;
+        for (let d = 0; d < features[i].length; d++) {
+          const diff = features[i][d] - features[i + 1][d];
+          dist += diff * diff;
+        }
+        const sim = Math.exp(-dist / (features[i].length * 0.3));
+        out[i][i + 1] = sim;
+        out[i + 1][i] = sim;
+      }
+      return out;
+    }
+
+    function blendAffinity(rec, path) {
+      const n = rec.length;
+      const degPath = new Float32Array(n);
+      const degRec = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        let p = 0, r = 0;
+        for (let j = 0; j < n; j++) { p += path[i][j]; r += rec[i][j]; }
+        degPath[i] = p; degRec[i] = r;
+      }
+      let num = 0, den = 0;
+      for (let i = 0; i < n; i++) {
+        num += degPath[i] * (degPath[i] + degRec[i]);
+        den += (degPath[i] + degRec[i]) ** 2;
+      }
+      const mu = den > 0 ? num / den : 0.5;
+      const A = Array.from({ length: n }, () => new Float32Array(n));
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) A[i][j] = mu * rec[i][j] + (1 - mu) * path[i][j];
+      }
+      return A;
+    }
+
+    function normalizedLaplacian(A) {
+      const n = A.length;
+      const L = Array.from({ length: n }, () => new Float32Array(n));
+      const deg = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        let sum = 0;
+        for (let j = 0; j < n; j++) sum += A[i][j];
+        deg[i] = Math.max(sum, 1e-9);
+      }
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const norm = A[i][j] / Math.sqrt(deg[i] * deg[j]);
+          L[i][j] = (i === j ? 1 : 0) - norm;
+        }
+      }
+      return L;
+    }
+
+    function matVec(M, v) {
+      const n = M.length;
+      const out = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        let sum = 0;
+        const row = M[i];
+        for (let j = 0; j < n; j++) sum += row[j] * v[j];
+        out[i] = sum;
+      }
+      return out;
+    }
+
+    function orthogonalize(v, basis) {
+      const out = Float32Array.from(v);
+      for (const b of basis) {
+        let dot = 0, bb = 0;
+        for (let i = 0; i < out.length; i++) { dot += out[i] * b[i]; bb += b[i] * b[i]; }
+        const scale = bb > 0 ? dot / bb : 0;
+        for (let i = 0; i < out.length; i++) out[i] -= b[i] * scale;
+      }
+      return out;
+    }
+
+    function normalizeVec(v) {
+      let norm = 0;
+      for (let i = 0; i < v.length; i++) norm += v[i] * v[i];
+      norm = Math.sqrt(norm) || 1;
+      for (let i = 0; i < v.length; i++) v[i] /= norm;
+      return v;
+    }
+
+    function smallestEigenvectorsByPower(L, k = 16, iters = 80) {
+      const n = L.length;
+      const IminusL = Array.from({ length: n }, (_, i) => {
+        const row = new Float32Array(n);
+        for (let j = 0; j < n; j++) row[j] = (i === j ? 1 : 0) - L[i][j];
+        return row;
+      });
+
+      const basis = [];
+      for (let m = 0; m < k; m++) {
+        let v = new Float32Array(n);
+        for (let i = 0; i < n; i++) v[i] = Math.random() * 2 - 1;
+        v = normalizeVec(v);
+        for (let t = 0; t < iters; t++) {
+          let w = matVec(IminusL, v);
+          w = orthogonalize(w, basis);
+          v = normalizeVec(w);
+        }
+        basis.push(v);
+      }
+
+      const embedding = [];
+      for (let i = 0; i < n; i++) {
+        const row = [];
+        let csum = 0;
+        for (let j = 0; j < k; j++) {
+          csum += basis[j][i] * basis[j][i];
+          row.push(basis[j][i] / Math.sqrt(Math.max(csum, 1e-9)));
+        }
+        embedding.push(row);
+      }
+      return embedding;
+    }
+
+    function computeSegmentsFromLabels(labels) {
+      let segment = -1;
+      let lastCluster = -1;
+      let posInSeg = 0;
+      const segs = [];
+      for (let i = 0; i < labels.length; i++) {
+        if (labels[i] !== lastCluster) { segment++; posInSeg = 0; }
+        else posInSeg++;
+        segs.push({ segment, is: posInSeg });
+        lastCluster = labels[i];
+      }
+      return segs;
+    }
+
+    function createBeatmap(beatTimes, labels, amplitudes, duration, startBeat = 1) {
+      const segInfo = computeSegmentsFromLabels(labels);
+      const info = [];
+      for (let i = 0; i < labels.length; i++) {
+        const start = beatTimes[i];
+        const stop = i === labels.length - 1 ? duration : beatTimes[i + 1];
+        info.push({
+          id: i,
+          start,
+          duration: Math.max(0.01, stop - start),
+          cluster: labels[i],
+          amplitude: amplitudes[i],
+          segment: segInfo[i].segment,
+          is: segInfo[i].is,
+          quartile: 0,
+          next: i + 1,
+          jump_candidates: []
+        });
+      }
+
+      const avgAmp = info.reduce((a, b) => a + b.amplitude, 0) / Math.max(1, info.length);
+      let fade = info.length - 1;
+      for (let i = info.length - 1; i >= 0; i--) {
+        if (info[i].amplitude >= avgAmp * 0.75) { fade = i; break; }
+      }
+
+      const beats = info.slice(startBeat, fade + 1);
+      for (let i = 0; i < beats.length; i++) {
+        beats[i].id = i;
+        beats[i].quartile = Math.floor(i / (beats.length / 4));
+      }
+
+      const loopBoundsBegin = startBeat;
+      for (let i = 0; i < beats.length; i++) {
+        const beat = beats[i];
+        if (i === beats.length - 1) {
+          const cand = beats.find(b => b.cluster === beat.cluster && b.id % 4 === (beat.id + 1) % 4 && b.id <= 0.5 * beats.length && b.id >= loopBoundsBegin);
+          beat.next = cand ? cand.id : loopBoundsBegin;
+        } else {
+          beat.next = i + 1;
+        }
+
+        const nxt = beats[beat.next];
+        beat.jump_candidates = beats.slice(loopBoundsBegin).filter(bx =>
+          bx.cluster === nxt.cluster &&
+          bx.is === nxt.is &&
+          bx.id % 4 === nxt.id % 4 &&
+          bx.segment !== beat.segment &&
+          bx.id !== beat.next
+        ).map(bx => bx.id);
+      }
+
+      const segments = Math.max(...beats.map(b => b.segment)) + 1;
+      return { beats, segments };
+    }
+
+    function generatePlayVector(beats, tempo, startBeat = 1) {
+      const random = Math.random;
+      let maxSequenceLen = Math.round((tempo / 120) * 48);
+      maxSequenceLen -= maxSequenceLen % 4;
+      maxSequenceLen = Math.max(16, maxSequenceLen);
+
+      let minSequence = Math.max((16 + Math.floor(random() * Math.max(4, maxSequenceLen - 16)) / 4 * 4), startBeat);
+      let currentSequence = 0;
+      let beat = beats[0];
+
+      const playVector = [];
+      playVector.push({ beat: 0, seq_len: minSequence, seq_pos: currentSequence });
+
+      const segments = Math.max(...beats.map(b => b.segment)) + 1;
+      const recentDepth = Math.max(1, Math.round(segments * 0.25));
+      const recent = [];
+      const maxBeatsBetweenJumps = Math.max(1, Math.round(beats.length * 0.1));
+      let beatsSinceJump = 0;
+      let failedJumps = 0;
+
+      for (let i = 0; i < 1024 * 64; i++) {
+        if (!recent.includes(beat.segment)) {
+          recent.push(beat.segment);
+          while (recent.length > recentDepth) recent.shift();
+        }
+
+        currentSequence++;
+        const willJump = currentSequence === minSequence || beatsSinceJump >= maxBeatsBetweenJumps;
+
+        if (willJump) {
+          const nonRecentCandidates = beat.jump_candidates.filter(c => !recent.includes(beats[c].segment));
+          if (nonRecentCandidates.length === 0) {
+            beatsSinceJump++;
+            failedJumps++;
+            const nonQuartile = beat.jump_candidates.filter(c => beats[c].quartile !== beat.quartile);
+            if (failedJumps >= 0.1 * beats.length && nonQuartile.length > 0) {
+              let jumpTo = nonQuartile[0];
+              let far = Math.abs(beat.id - jumpTo);
+              for (const c of nonQuartile) {
+                const d = Math.abs(beat.id - c);
+                if (d > far) { far = d; jumpTo = c; }
+              }
+              beat = beats[jumpTo];
+              beatsSinceJump = 0;
+              failedJumps = 0;
+            } else if (failedJumps >= 0.2 * beats.length) {
+              beat = beats[startBeat];
+              beatsSinceJump = 0;
+              failedJumps = 0;
+            } else {
+              beat = beats[beat.next];
+            }
+          } else {
+            beat = beats[nonRecentCandidates[Math.floor(random() * nonRecentCandidates.length)]];
+            beatsSinceJump = 0;
+            failedJumps = 0;
+          }
+
+          currentSequence = 0;
+          minSequence = 16 + (Math.floor(Math.random() * ((maxSequenceLen - 16) / 4 + 1)) * 4);
+          if (beatsSinceJump >= maxBeatsBetweenJumps) currentSequence = minSequence;
+          playVector.push({ beat: beat.id, seq_len: minSequence, seq_pos: currentSequence });
+        } else {
+          playVector.push({ beat: beat.next, seq_len: minSequence, seq_pos: currentSequence });
+          beat = beats[beat.next];
+          beatsSinceJump++;
+        }
+      }
+
+      return playVector;
+    }
+
+    function drawVisualization() {
+      const w = viz.width;
+      const h = viz.height;
+      ctx2d.clearRect(0, 0, w, h);
+      ctx2d.fillStyle = '#0e1420';
+      ctx2d.fillRect(0, 0, w, h);
+
+      if (!state.beatmap.length) return;
+
+      const clusters = state.clusters;
+      const color = (id) => `hsl(${(id * 67) % 360} 72% 56%)`;
+      const beats = state.beatmap;
+      const topY = 20;
+      const topH = 160;
+      const bw = w / beats.length;
+      for (let i = 0; i < beats.length; i++) {
+        ctx2d.fillStyle = color(beats[i].cluster);
+        ctx2d.fillRect(i * bw, topY, Math.max(1, bw), topH);
+      }
+
+      ctx2d.strokeStyle = '#7d95bd';
+      ctx2d.lineWidth = 1;
+      ctx2d.strokeRect(0.5, topY + 0.5, w - 1, topH);
+
+      const pvY = 230;
+      const pvH = 160;
+      const sample = state.playVector.slice(0, Math.min(3000, state.playVector.length));
+      const step = w / sample.length;
+      for (let i = 0; i < sample.length; i++) {
+        const beatId = sample[i].beat;
+        const cluster = beats[beatId]?.cluster ?? 0;
+        ctx2d.fillStyle = color(cluster);
+        ctx2d.fillRect(i * step, pvY, Math.max(1, step), pvH);
+      }
+      ctx2d.strokeStyle = '#7d95bd';
+      ctx2d.strokeRect(0.5, pvY + 0.5, w - 1, pvH);
+
+      ctx2d.fillStyle = '#d2e4ff';
+      ctx2d.font = '13px ui-monospace, Menlo';
+      ctx2d.fillText(`Beatmap clusters (${clusters})`, 10, 14);
+      ctx2d.fillText(`Play vector preview (${sample.length} entries)`, 10, 224);
+    }
+
+    function stopPlayback() {
+      state.playing = false;
+      if (state.timerId) { clearTimeout(state.timerId); state.timerId = null; }
+      if (state.sourceNode) {
+        try { state.sourceNode.stop(); } catch {}
+        state.sourceNode.disconnect();
+        state.sourceNode = null;
+      }
+      playBtn.disabled = false;
+      stopBtn.disabled = true;
+      setStatus('Stopped.');
+    }
+
+    async function playRemix() {
+      if (!state.audioBuffer || !state.playVector.length) return;
+      await ensureAudioCtx();
+      stopPlayback();
+      state.playing = true;
+      state.playCursor = 0;
+      playBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      const channels = state.audioBuffer.numberOfChannels;
+      const sr = state.audioBuffer.sampleRate;
+      const srcChannels = [];
+      for (let c = 0; c < channels; c++) srcChannels.push(state.audioBuffer.getChannelData(c));
+
+      function scheduleNext() {
+        if (!state.playing) return;
+
+        const item = state.playVector[state.playCursor % state.playVector.length];
+        state.playCursor++;
+        const beat = state.beatmap[item.beat];
+        if (!beat) {
+          state.timerId = setTimeout(scheduleNext, 20);
+          return;
+        }
+
+        const start = Math.floor(beat.start * sr);
+        const end = Math.min(state.audioBuffer.length, Math.floor((beat.start + beat.duration) * sr));
+        const len = Math.max(128, end - start);
+
+        const b = state.audioCtx.createBuffer(channels, len, sr);
+        for (let c = 0; c < channels; c++) {
+          const dest = b.getChannelData(c);
+          const src = srcChannels[c];
+          for (let i = 0; i < len; i++) dest[i] = src[start + i] ?? 0;
+        }
+
+        const node = state.audioCtx.createBufferSource();
+        node.buffer = b;
+        node.connect(state.audioCtx.destination);
+        node.start();
+        state.sourceNode = node;
+
+        state.timerId = setTimeout(scheduleNext, Math.max(5, beat.duration * 1000 * 0.98));
+      }
+
+      setStatus('Playing remix...');
+      scheduleNext();
+    }
+
+    async function analyze() {
+      if (!state.audioFile) {
+        setStatus('Choose an audio file first.');
+        return;
+      }
+
+      analyzeBtn.disabled = true;
+      playBtn.disabled = true;
+      stopBtn.disabled = true;
+      downloadBtn.disabled = true;
+      setStatus('Loading audio...', 1);
+
+      try {
+        await ensureAudioCtx();
+        const buf = await state.audioFile.arrayBuffer();
+        state.audioBuffer = await state.audioCtx.decodeAudioData(buf.slice(0));
+        state.mono = monoFromBuffer(state.audioBuffer);
+        state.sampleRate = state.audioBuffer.sampleRate;
+
+        const workerCount = Math.max(2, Math.min((navigator.hardwareConcurrency || 4) - 1, 8));
+        const old = state.workers;
+        for (const w of old) w.worker.terminate();
+        state.workers = [];
+
+        const pool = createWorkerPool(workerCount);
+        for (let i = 0; i < pool.workers.length; i++) state.workers.push({ worker: pool.workers[i], busy: false, id: i, url: pool.url });
+
+        const rpc = (worker, type, payload) => new Promise((resolve, reject) => {
+          const reqId = ++state.messageSeq;
+          const onMsg = (ev) => {
+            const data = ev.data;
+            if (!data || !data.type) return;
+            worker.removeEventListener('message', onMsg);
+            resolve(data.payload);
+          };
+          worker.addEventListener('message', onMsg);
+          worker.postMessage({ type, payload, reqId });
+          setTimeout(() => reject(new Error(`Worker timeout for ${type}`)), 240000);
+        });
+
+        const beatWorker = state.workers[0].worker;
+        setStatus('Detecting beats (worker)...', 8);
+        const beatRes = await rpc(beatWorker, 'beat-detect', { mono: state.mono, sr: state.sampleRate });
+
+        const beatTimes = beatRes.beatTimes;
+        if (beatTimes.length < 32) throw new Error(`Beat detector produced too few beats (${beatTimes.length}).`);
+        state.tempo = beatRes.tempo;
+        log(`Beat detection complete: ${beatTimes.length} beats, tempo ${state.tempo.toFixed(2)} BPM.`);
+
+        const beatIntervals = [];
+        for (let i = 0; i < beatTimes.length - 1; i++) {
+          const start = Math.floor(beatTimes[i] * state.sampleRate);
+          const end = Math.floor(beatTimes[i + 1] * state.sampleRate);
+          if (end - start > 128) beatIntervals.push([start, end]);
+        }
+
+        const chunks = [];
+        const chunkSize = Math.ceil(beatIntervals.length / state.workers.length);
+        for (let i = 0; i < beatIntervals.length; i += chunkSize) {
+          chunks.push({ chunkStart: i, intervals: beatIntervals.slice(i, i + chunkSize) });
+        }
+
+        setStatus('Extracting beat features (multi-worker)...', 20);
+        const featResults = await Promise.all(chunks.map((c, idx) => {
+          const w = state.workers[idx % state.workers.length].worker;
+          return rpc(w, 'beat-features', { mono: state.mono, sr: state.sampleRate, intervals: c.intervals, chunkStart: c.chunkStart });
+        }));
+
+        const features = new Array(beatIntervals.length);
+        const amplitudes = new Array(beatIntervals.length);
+        for (const r of featResults) {
+          for (let i = 0; i < r.feats.length; i++) {
+            features[r.chunkStart + i] = r.feats[i];
+            amplitudes[r.chunkStart + i] = r.amps[i];
+          }
+        }
+
+        setStatus('Computing recurrence matrix (WebGPU)...', 35);
+        const rec = await computeSimilarityWebGPU(features, setStatus);
+
+        setStatus('Building Laplacian and spectral embedding...', 55);
+        const smoothed = rec.map(row => gaussianSmooth(row, 2));
+        const path = buildPathMatrix(features);
+        const affinity = blendAffinity(smoothed, path);
+        const L = normalizedLaplacian(affinity);
+        const embedding = smallestEigenvectorsByPower(L, Math.min(16, Math.max(6, Math.floor(features.length / 12))), 70);
+
+        setStatus('Clustering beats...', 70);
+        const clusterWorker = state.workers[1]?.worker || state.workers[0].worker;
+        const forcedK = Math.max(0, Math.min(64, Number(clusterInput.value) || 0));
+        const cl = await rpc(clusterWorker, 'cluster-auto', { embedding, forcedK });
+        const labels = cl.labels;
+        state.clusters = cl.k;
+
+        const duration = state.audioBuffer.duration;
+        const beatTimesTrim = beatIntervals.map(([s]) => s / state.sampleRate);
+        setStatus('Constructing beatmap and play vector...', 82);
+
+        const bm = createBeatmap(beatTimesTrim, labels, amplitudes, duration, 1);
+        state.beatmap = bm.beats;
+        state.segments = bm.segments;
+        state.playVector = generatePlayVector(state.beatmap, state.tempo, 1);
+
+        setStatus('Done.', 100);
+        setMetrics();
+        drawVisualization();
+
+        playBtn.disabled = false;
+        stopBtn.disabled = true;
+        downloadBtn.disabled = false;
+
+        log(`Analysis done: clusters=${state.clusters}, segments=${state.segments}, playVector=${state.playVector.length}`);
+      } catch (err) {
+        console.error(err);
+        log(`ERROR: ${err.message}`);
+        setStatus(`Failed: ${err.message}`, 0);
+      } finally {
+        analyzeBtn.disabled = false;
+      }
+    }
+
+    function downloadJson() {
+      const payload = {
+        format: 'remixatron-offline-v1',
+        generated_at: new Date().toISOString(),
+        tempo: state.tempo,
+        clusters: state.clusters,
+        segments: state.segments,
+        beatmap: state.beatmap,
+        play_vector: state.playVector
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(state.audioFile?.name || 'track').replace(/\.[^.]+$/, '')}.remixatron.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      log('Exported beatmap + play vector JSON.');
+    }
+
+    analyzeBtn.addEventListener('click', analyze);
+    playBtn.addEventListener('click', playRemix);
+    stopBtn.addEventListener('click', stopPlayback);
+    downloadBtn.addEventListener('click', downloadJson);
+
+    setMetrics();
+    drawVisualization();
+    setStatus('Idle. Select an audio file and click Analyze.');
+    log('Ready. Web worker pool and WebGPU pipeline are created during analysis.');
+  })();
+  </script>
+</body>
 </html>
