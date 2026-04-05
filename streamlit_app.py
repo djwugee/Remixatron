@@ -42,7 +42,8 @@ def fetch_from_youtube(url, status_callback):
         '--no-playlist',
         '--no-check-certificates',
         '--js-runtimes', 'node',
-        '--extractor-args', 'youtube:player-client=web,mweb,android,ios'
+        '--extractor-args', 'youtube:player-client=web,mweb,android,ios',
+        '--remote-components', 'ejs:github'
     ]
 
     # Use yt-dlp to download audio and metadata
@@ -55,7 +56,7 @@ def fetch_from_youtube(url, status_callback):
         thumbnail = info.get('thumbnail', '')
 
         # Download audio
-        cmd_dl = ['yt-dlp', '-x', '--audio-format', 'wav', '-f', 'bestaudio', '-o', tmp_base + '.%(ext)s'] + common_args + [url]
+        cmd_dl = ['yt-dlp', '-x', '--audio-format', 'wav', '-f', 'bestaudio/best', '-o', tmp_base + '.%(ext)s'] + common_args + [url]
         subprocess.check_output(cmd_dl, stderr=subprocess.STDOUT)
 
         file_path = tmp_base + '.wav'
